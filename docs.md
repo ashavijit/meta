@@ -1,6 +1,6 @@
 # meta-lang Developer Reference
 
-A human-friendly, typed, and comment-supported configuration language for modern developers.
+The smart way to write and manage configs — human-readable, type-safe, and flexible
 
 ## Table of Contents
 - [Installation](#installation)

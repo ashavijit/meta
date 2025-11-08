@@ -23,7 +23,7 @@
     "env",
     "typed"
   ],
-  "author": "Developer Community",
+  "author": "ashavijit",
   "license": "MIT",
   "devDependencies": {
     "jest": "^29.0.0"
