@@ -1,0 +1,33 @@
+{
+  "name": "meta-lang",
+  "version": "1.0.0",
+  "description": "A human-friendly, typed, and comment-supported configuration language for modern developers — like JSON, but better.",
+  "main": "src/index.js",
+  "bin": {
+    "meta": "bin/meta.js"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "echo \"No build step required for this JavaScript project\""
+  },
+  "keywords": [
+    "config",
+    "configuration",
+    "meta",
+    "parser",
+    "environment",
+    "env",
+    "typed"
+  ],
+  "author": "Developer Community",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "dependencies": {},
+  "files": [
+    "src/",
+    "bin/",
+    "README.md"
+  ]
+}
