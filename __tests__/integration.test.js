@@ -12,18 +12,15 @@ describe('Integration Tests', () => {
   let tempDir;
   let originalEnv;
   
-  // Save original environment variables before tests
   beforeAll(() => {
     originalEnv = { ...process.env };
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'meta-test-'));
   });
   
-  // Restore original environment variables after each test
   afterEach(() => {
     process.env = { ...originalEnv };
   });
   
-  // Clean up temporary directory after all tests
   afterAll(() => {
     if (tempDir && fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
