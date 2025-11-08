@@ -15,6 +15,8 @@ const TokenType = {
   LIST_END: 'LIST_END',
   LIST_SEPARATOR: 'LIST_SEPARATOR',
   MAP_START: 'MAP_START',
+  MAP_END: 'MAP_END',
+  INDENT: 'INDENT',
   ENV_VAR: 'ENV_VAR'
 };
 
@@ -58,7 +60,20 @@ function tokenize(text) {
         section += text[i];
         i++;
       }
-      tokens.push({ type: TokenType.SECTION, value: section });
+      
+      if (section === 'env') {
+        while (i < text.length && /\s/.test(text[i])) {
+          i++;
+        }
+        let envName = '';
+        while (i < text.length && /[a-zA-Z0-9_]/.test(text[i])) {
+          envName += text[i];
+          i++;
+        }
+        tokens.push({ type: TokenType.SECTION, value: `env ${envName}` });
+      } else {
+        tokens.push({ type: TokenType.SECTION, value: section });
+      }
       continue;
     }
     
@@ -89,12 +104,17 @@ function tokenize(text) {
         tokens.push({ type: TokenType.IDENTIFIER, value: word });
         continue;
       } else {
-        tokens.push({ type: TokenType.VALUE, value: word });
+        while (i < text.length && text[i] !== '\n') {
+          word += text[i];
+          i++;
+        }
+        tokens.push({ type: TokenType.VALUE, value: word.trim() });
         continue;
       }
     }
     
     if (char === '"' || char === "'") {
+      // String value
       const quote = char;
       i++; // Skip opening quote
       let value = '';
@@ -125,22 +145,6 @@ function tokenize(text) {
       continue;
     }
     
-    if (char === '{') {
-      tokens.push({ type: TokenType.MAP_START, value: char });
-      i++;
-      continue;
-    }
-    
-    if (/[0-9\-\.]/.test(char)) {
-      let numStr = '';
-      while (i < text.length && /[0-9\-\.eE]/.test(text[i])) {
-        numStr += text[i];
-        i++;
-      }
-      tokens.push({ type: TokenType.VALUE, value: numStr });
-      continue;
-    }
-    
     if (text.substr(i, 5) === '$ENV(') {
       let envStr = '$ENV(';
       i += 5; // Skip $ENV(
@@ -152,6 +156,18 @@ function tokenize(text) {
         i++;
       }
       tokens.push({ type: TokenType.ENV_VAR, value: envStr });
+      continue;
+    }
+    
+    if (i < text.length) {
+      let value = '';
+      while (i < text.length && text[i] !== '\n') {
+        value += text[i];
+        i++;
+      }
+      if (value.trim()) {
+        tokens.push({ type: TokenType.VALUE, value: value.trim() });
+      }
       continue;
     }
     

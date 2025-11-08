@@ -36,6 +36,7 @@ class TypeConverter {
    * Converts a value to a string
    */
   convertString(value, envResolver) {
+    // If it's an environment variable, resolve it
     if (typeof value === 'string' && value.startsWith('$ENV(')) {
       return envResolver.resolve(value);
     }
@@ -111,6 +112,18 @@ class TypeConverter {
    * Converts a value to a list
    */
   convertList(value, envResolver) {
+    if (typeof value === 'string' && value.startsWith('$ENV(')) {
+      const resolved = envResolver.resolve(value);
+      if (resolved.startsWith('[') && resolved.endsWith(']')) {
+        try {
+          return JSON.parse(resolved);
+        } catch (e) {
+          return [resolved];
+        }
+      }
+      return [resolved];
+    }
+    
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
@@ -134,7 +147,6 @@ class TypeConverter {
    * Converts a value to a map (object)
    */
   convertMap(value, envResolver) {
-
     return typeof value === 'object' ? value : {};
   }
   

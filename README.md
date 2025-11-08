@@ -153,6 +153,20 @@ meta config.meta
 }
 ```
 
+### Template Generation
+
+Quickly bootstrap new applications with the template generation feature:
+
+```bash
+meta generate app
+```
+
+This creates a complete application structure with:
+- Multi-environment configuration file
+- Environment variable examples
+- Pre-configured npm scripts
+- Working application example
+
 ---
 
 ## 🧩 Supported Types

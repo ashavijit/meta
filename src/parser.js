@@ -22,19 +22,28 @@ function parseMeta(text, options = {}) {
   let currentSection = null;
   let i = 0;
   
+  let mapStack = [];
+  
   while (i < tokens.length) {
     const token = tokens[i];
     
     if (token.type === TokenType.SECTION) {
-      currentSection = token.value;
-      result[currentSection] = {};
+      if (token.value.startsWith('env ')) {
+        const envName = token.value.substring(4); // Remove "env " prefix
+        currentSection = envName;
+        result[currentSection] = {};
+      } else {
+        currentSection = token.value;
+        result[currentSection] = {};
+      }
+      mapStack = []; // Reset map stack when entering new section
       i++;
       continue;
     }
     
     if (token.type === TokenType.IDENTIFIER) {
       const key = token.value;
-      i++; 
+      i++; // Move to type token
       
       if (i >= tokens.length || tokens[i].type !== TokenType.TYPE) {
         throw new Error(`Expected type declaration after key '${key}'`);
@@ -53,55 +62,48 @@ function parseMeta(text, options = {}) {
         throw new Error(`Expected value for key '${key}'`);
       }
       
-      if (tokens[i].type === TokenType.LIST_START) {
-        const listTokens = [];
-        i++; // Skip LIST_START
-        let listDepth = 1;
+      if (typeInfo.value === 'map') {
+        let mapObj = {};
         
-        while (i < tokens.length && listDepth > 0) {
-          if (tokens[i].type === TokenType.LIST_START) {
-            listDepth++;
-          } else if (tokens[i].type === TokenType.LIST_END) {
-            listDepth--;
-          }
-          
-          if (listDepth > 0) {
-            listTokens.push(tokens[i]);
+        if (mapStack.length > 0) {
+          const parentMap = mapStack[mapStack.length - 1];
+          parentMap[key] = mapObj;
+        } else if (currentSection) {
+          result[currentSection][key] = mapObj;
+        } else {
+          result[key] = mapObj;
+        }
+        
+        mapStack.push(mapObj);
+        i++;
+        continue;
+      }
+      
+      if (typeInfo.value === 'list') {
+        let listValue = '';
+        while (i < tokens.length && 
+               tokens[i].type !== TokenType.NEWLINE && 
+               tokens[i].type !== TokenType.SECTION &&
+               tokens[i].type !== TokenType.IDENTIFIER) {
+          if (tokens[i].type !== TokenType.WHITESPACE) {
+            listValue += tokens[i].value;
           }
           i++;
         }
         
-        let listStr = '[';
-        for (let j = 0; j < listTokens.length; j++) {
-          if (listTokens[j].type !== TokenType.WHITESPACE && 
-              listTokens[j].type !== TokenType.NEWLINE &&
-              listTokens[j].type !== TokenType.LIST_SEPARATOR) {
-            listStr += listTokens[j].value;
-            if (j < listTokens.length - 1 && 
-                listTokens[j].type !== TokenType.LIST_SEPARATOR &&
-                (j + 1 < listTokens.length && 
-                 listTokens[j+1].type !== TokenType.LIST_SEPARATOR &&
-                 listTokens[j+1].type !== TokenType.LIST_END)) {
-              listStr += ',';
-            }
-          } else if (listTokens[j].type === TokenType.LIST_SEPARATOR) {
-            listStr += ',';
-          }
-        }
-        listStr += ']';
-        
-        let value = listStr;
-        
         try {
-          value = converter.convert(typeInfo.value, value, envResolver);
+          const value = converter.convert('list', listValue, envResolver);
+          
+          if (mapStack.length > 0) {
+            const currentMap = mapStack[mapStack.length - 1];
+            currentMap[key] = value;
+          } else if (currentSection) {
+            result[currentSection][key] = value;
+          } else {
+            result[key] = value;
+          }
         } catch (error) {
-          throw new Error(`Error converting value for key '${key}': ${error.message}`);
-        }
-        
-        if (currentSection) {
-          result[currentSection][key] = value;
-        } else {
-          result[key] = value;
+          throw new Error(`Error converting list value for key '${key}': ${error.message}`);
         }
         continue;
       }
@@ -119,12 +121,23 @@ function parseMeta(text, options = {}) {
         throw new Error(`Error converting value for key '${key}': ${error.message}`);
       }
       
-      if (currentSection) {
+      if (mapStack.length > 0) {
+        const currentMap = mapStack[mapStack.length - 1];
+        currentMap[key] = value;
+      } else if (currentSection) {
         result[currentSection][key] = value;
       } else {
         result[key] = value;
       }
       
+      i++; // Move to next token
+      continue;
+    }
+    
+    if (token.type === TokenType.MAP_END) {
+      if (mapStack.length > 0) {
+        mapStack.pop();
+      }
       i++;
       continue;
     }
@@ -132,11 +145,6 @@ function parseMeta(text, options = {}) {
     if (token.type === TokenType.COMMENT || 
         token.type === TokenType.WHITESPACE || 
         token.type === TokenType.NEWLINE) {
-      i++;
-      continue;
-    }
-    
-    if (token.type === TokenType.MAP_START) {
       i++;
       continue;
     }

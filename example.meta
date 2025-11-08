@@ -3,7 +3,7 @@
 name:string EnvX
 version:float 1.4
 debug:bool true
-tags:list [prod,backend,secure]
+tags:list [prod, backend, secure]
 
 # Database configuration
 @database

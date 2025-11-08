@@ -8,7 +8,11 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "echo \"No build step required for this JavaScript project\""
+    "build": "echo \"No build step required for this JavaScript project\"",
+    "start": "node index.js",
+    "dev": "node index.js --env dev",
+    "staging": "node index.js --env staging",
+    "prod": "node index.js --env prod"
   },
   "keywords": [
     "config",
