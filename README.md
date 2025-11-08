@@ -276,9 +276,3 @@ project/
 
 MIT © 2025 — built for developers who love clean configs ❤️
 
----
-
-## 🔗 Example GitHub description
-
-> **meta-lang** — a developer-friendly, type-safe configuration language for Node.js.
-> Replace your messy `.json` and `.env` with one beautiful `.meta` file.
