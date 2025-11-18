@@ -1,0 +1,137 @@
+# ===============================
+# Meta Configuration File
+# Production-ready replacement for .env files
+# ===============================
+
+# Common settings (shared across all environments)
+@common
+@v 1.0.0
+app_name:string MyApp
+version:float 1.0.0
+description:string A production-ready Node.js application
+
+# Application settings
+@common
+debug:bool false
+log_level:string info
+timeout:int 30
+
+# Database configuration (common)
+@common
+database_driver:string postgresql
+database_pool_min:int 2
+database_pool_max:int 10
+
+# Cache configuration (common)
+@common
+cache_ttl:int 3600
+cache_prefix:string app
+
+# ===============================
+# Development Environment
+# ===============================
+
+@env dev
+debug:bool true
+log_level:string debug
+port:int 3000
+host:string localhost
+
+# Development database
+@env dev
+database_host:string localhost
+database_port:int 5432
+database_name:string myapp_dev
+database_user:string dev_user
+database_password:env $ENV(DB_PASS_DEV, "dev_password")
+database_ssl:bool false
+
+# Development cache
+@env dev
+cache_enabled:bool true
+cache_host:string localhost
+cache_port:int 6379
+cache_password:env $ENV(REDIS_PASS_DEV, "")
+
+# ===============================
+# Staging Environment
+# ===============================
+
+@env staging
+debug:bool false
+log_level:string info
+port:int 3000
+host:string staging.myapp.com
+
+# Staging database
+@env staging
+database_host:string staging.db.myapp.com
+database_port:int 5432
+database_name:string myapp_staging
+database_user:string staging_user
+database_password:env $ENV(DB_PASS_STAGING)
+database_ssl:bool true
+
+# Staging cache
+@env staging
+cache_enabled:bool true
+cache_host:string cache.staging.myapp.com
+cache_port:int 6380
+cache_password:env $ENV(REDIS_PASS_STAGING)
+
+# ===============================
+# Production Environment
+# ===============================
+
+@env prod
+debug:bool false
+log_level:string warn
+port:int 8080
+host:string api.myapp.com
+
+# Production database
+@env prod
+database_host:string prod.db.myapp.com
+database_port:int 5432
+database_name:string myapp_prod
+database_user:env $ENV(DB_USER_PROD)
+database_password:env $ENV(DB_PASS_PROD)
+database_ssl:bool true
+
+# Production cache
+@env prod
+cache_enabled:bool true
+cache_host:string cache.prod.myapp.com
+cache_port:int 6379
+cache_password:env $ENV(REDIS_PASS_PROD)
+
+# ===============================
+# Feature Flags
+# ===============================
+
+@features
+auth_enabled:bool true
+analytics_enabled:bool false
+metrics_enabled:bool true
+rate_limiting:bool true
+
+# ===============================
+# API Configuration
+# ===============================
+
+@api
+base_url:string https://api.myapp.com
+api_version:string v1
+rate_limit:int 100
+timeout:int 5000
+
+# ===============================
+# External Services
+# ===============================
+
+@services
+email_service:bool true
+sms_service:bool false
+payment_gateway:string stripe
+payment_api_key:env $ENV(STRIPE_API_KEY)
+

@@ -1,0 +1,68 @@
+# ===============================
+# Express App Configuration
+# Using meta-lang SDK
+# ===============================
+
+# Common settings (shared across all environments)
+@common
+@v 1.0.0
+app_name:string Meta Express App
+version:float 1.0.0
+description:string A simple Express app using meta-lang SDK
+
+# Application settings
+@common
+debug:bool false
+log_level:string info
+timeout:int 30
+
+# ===============================
+# Development Environment
+# ===============================
+
+@env dev
+debug:bool true
+log_level:string debug
+port:int 3000
+host:string localhost
+
+# Development database
+@env dev
+database_driver:string sqlite
+database_host:string localhost
+database_port:int 5432
+database_name:string app_dev
+database_user:string dev_user
+database_password:env $ENV(DB_PASS_DEV, "dev_password")
+
+# Development cache
+@env dev
+cache_enabled:bool true
+cache_host:string localhost
+cache_port:int 6379
+
+# ===============================
+# Production Environment
+# ===============================
+
+@env prod
+debug:bool false
+log_level:string warn
+port:int 8080
+host:string 0.0.0.0
+
+# Production database
+@env prod
+database_driver:string postgresql
+database_host:env $ENV(DB_HOST)
+database_port:int 5432
+database_name:env $ENV(DB_NAME)
+database_user:env $ENV(DB_USER)
+database_password:env $ENV(DB_PASS)
+
+# Production cache
+@env prod
+cache_enabled:bool true
+cache_host:env $ENV(CACHE_HOST, "localhost")
+cache_port:int 6379
+

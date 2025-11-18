@@ -61,8 +61,26 @@ function tokenize(text) {
         i++;
       }
       
+      // Handle @v as a special directive (version tag - skip the line)
+      if (section === 'v') {
+        // Skip whitespace after @v
+        while (i < text.length && /\s/.test(text[i]) && text[i] !== '\n') {
+          i++;
+        }
+        // Skip the rest of the line (version value)
+        while (i < text.length && text[i] !== '\n') {
+          i++;
+        }
+        // Skip the newline itself
+        if (i < text.length && text[i] === '\n') {
+          i++;
+        }
+        continue; // Skip this line entirely
+      }
+      
       if (section === 'env') {
-        while (i < text.length && /\s/.test(text[i])) {
+        // Skip whitespace after @env
+        while (i < text.length && /\s/.test(text[i]) && text[i] !== '\n') {
           i++;
         }
         let envName = '';
@@ -70,7 +88,11 @@ function tokenize(text) {
           envName += text[i];
           i++;
         }
-        tokens.push({ type: TokenType.SECTION, value: `env ${envName}` });
+        if (envName) {
+          tokens.push({ type: TokenType.SECTION, value: `env ${envName}` });
+        } else {
+          tokens.push({ type: TokenType.SECTION, value: 'env' });
+        }
       } else {
         tokens.push({ type: TokenType.SECTION, value: section });
       }
@@ -78,14 +100,34 @@ function tokenize(text) {
     }
     
     if (char === ':') {
-      i++; // Skip :
-      let type = '';
-      while (i < text.length && /[a-zA-Z]/.test(text[i])) {
-        type += text[i];
-        i++;
+      // Check if this colon is followed by a type (letter) or part of a value (like in URLs)
+      let peekIndex = i + 1;
+      // Skip whitespace
+      while (peekIndex < text.length && /\s/.test(text[peekIndex]) && text[peekIndex] !== '\n') {
+        peekIndex++;
       }
-      tokens.push({ type: TokenType.TYPE, value: type });
-      continue;
+      
+      // If followed by a letter, it's a type separator
+      if (peekIndex < text.length && /[a-zA-Z]/.test(text[peekIndex])) {
+        i++; // Skip :
+        // Skip whitespace after colon
+        while (i < text.length && /\s/.test(text[i]) && text[i] !== '\n') {
+          i++;
+        }
+        let type = '';
+        while (i < text.length && /[a-zA-Z]/.test(text[i])) {
+          type += text[i];
+          i++;
+        }
+        // Only push TYPE token if we found a type
+        if (type) {
+          tokens.push({ type: TokenType.TYPE, value: type });
+        }
+        continue;
+      } else {
+        // Colon is part of the value (like in URLs), treat it as a regular character
+        // Fall through to value handling below
+      }
     }
     
     if (/[a-zA-Z_]/.test(char)) {
@@ -145,7 +187,7 @@ function tokenize(text) {
       continue;
     }
     
-    if (text.substr(i, 5) === '$ENV(') {
+    if (char === '$' && i + 4 < text.length && text.substr(i, 5) === '$ENV(') {
       let envStr = '$ENV(';
       i += 5; // Skip $ENV(
       let parenCount = 1;
@@ -159,14 +201,21 @@ function tokenize(text) {
       continue;
     }
     
+    // Handle any remaining characters as values (until newline or comment)
+    // This includes numbers, strings, version numbers, etc.
     if (i < text.length) {
       let value = '';
       while (i < text.length && text[i] !== '\n') {
+        // Stop if we encounter a comment
+        if (text[i] === '#') {
+          break;
+        }
         value += text[i];
         i++;
       }
-      if (value.trim()) {
-        tokens.push({ type: TokenType.VALUE, value: value.trim() });
+      const trimmed = value.trim();
+      if (trimmed) {
+        tokens.push({ type: TokenType.VALUE, value: trimmed });
       }
       continue;
     }

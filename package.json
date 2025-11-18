@@ -1,18 +1,27 @@
 {
   "name": "meta-lang",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A human-friendly, typed, and comment-supported configuration language for modern developers — like JSON, but better.",
   "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./app-config": "./src/app-config.js",
+    "./config-loader": "./src/config-loader.js"
+  },
   "bin": {
     "meta": "bin/meta.js"
   },
   "scripts": {
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "build": "echo \"No build step required for this JavaScript project\"",
     "start": "node index.js",
     "dev": "node index.js --env dev",
     "staging": "node index.js --env staging",
-    "prod": "node index.js --env prod"
+    "prod": "node index.js --env prod",
+    "lint": "echo \"No linter configured\"",
+    "format": "echo \"No formatter configured\""
   },
   "keywords": [
     "config",
@@ -21,14 +30,16 @@
     "parser",
     "environment",
     "env",
-    "typed"
+    "typed",
+    "sdk",
+    "dotenv",
+    "config-loader"
   ],
   "author": "ashavijit",
   "license": "MIT",
   "devDependencies": {
     "jest": "^29.0.0"
   },
-  "dependencies": {},
   "files": [
     "src/",
     "bin/",

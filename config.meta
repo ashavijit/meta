@@ -1,0 +1,16 @@
+﻿@common
+@v 1.0.0
+name:string TestApp
+version:int 2
+
+@env dev
+debug:bool true
+port:int 3000
+database_host:string localhost
+cache_enabled:bool true
+
+@env prod
+debug:bool false
+port:int 8080
+database_host:string prod.db.com
+cache_enabled:bool true

@@ -1,175 +1,223 @@
 # 🧩 meta-lang
 
 > A **human-friendly**, **typed**, and **comment-supported** configuration language for modern developers — like JSON, but better.
->
+
 > ✨ `.meta` = JSON + YAML + Type Hints + `.env` combined.
 
 ---
 
-## 🚀 Features
+## 🚀 Quick Start
 
-| Feature                | Description                                                       |
-| ---------------------- | ----------------------------------------------------------------- |
-| 🧠 **Typed keys**      | Every key has a defined data type (`string`, `int`, `bool`, etc.) |
-| 💬 **Comments**        | Use `#` anywhere, like in Python                                  |
-| ⚙️ **Sections**        | Group related configs using `@section`                            |
-| 🔒 **Env vars**        | `$ENV(VARNAME)` pulls from environment                            |
-| 🧩 **Fallbacks**       | `$ENV(NAME, "default")` for defaults                              |
-| 🧾 **JSON-compatible** | Converts easily to JSON                                           |
-| 🧰 **CLI + API**       | Use as library or command line tool                               |
-| 🪶 **Readable**        | Less syntax noise, better readability                             |
-
----
-
-## 📦 Install
+### Installation
 
 ```bash
 npm install meta-lang
 ```
 
-Or globally for CLI:
+### Basic Usage
 
-```bash
-npm install -g meta-lang
+```javascript
+const { loadConfig } = require('meta-lang');
+
+// Load and use config (dotenv-like API)
+const config = loadConfig({
+  env: process.env.NODE_ENV || 'dev'
+});
+
+// Access config values
+const port = config.get('port');
+const dbHost = config.get('database.host');
+```
+
+### Simple App Config (dotenv replacement)
+
+```javascript
+const config = require('meta-lang/app-config');
+
+// Initialize once at app startup
+config.initConfig({
+  env: process.env.NODE_ENV || 'dev',
+  setEnv: true // Auto-set process.env variables
+});
+
+// Use like dotenv
+const port = config.get('port');
+const dbHost = config.get('database_host');
 ```
 
 ---
 
-## ✨ Example `.meta` file
-
-`config.meta`
+## 📝 Example `config.meta` File
 
 ```meta
 # Application metadata
-@app
-name:string EnvX
-version:float 1.4
+@common
+@v 1.0.0
+app_name:string MyApp
+version:float 1.0.0
+description:string A production-ready Node.js application
+
+# Development Environment
+@env dev
 debug:bool true
-tags:list [prod, backend, secure]
-
-# Database configuration
-@database
+port:int 3000
 host:string localhost
-port:int 5432
-username:string $ENV(DB_USER, "admin")
-password:env $ENV(DB_PASS)
-max_connections:int 100
+database_host:string localhost
+database_password:env $ENV(DB_PASS, "dev_password")
 
-# Cache setup
-@cache
-enabled:bool true
-engine:string redis
-config:map
-  host:string localhost
-  port:int 6379
-  timeout:int 30
-
-# Feature toggles
-@features
-auth:bool true
-analytics:bool false
+# Production Environment
+@env prod
+debug:bool false
+port:int 8080
+host:string api.myapp.com
+database_host:string prod.db.com
+database_password:env $ENV(DB_PASS)
 ```
 
 ---
 
-## ⚙️ Example `.env` file (optional)
+## 🧩 SDK API
 
+### Core Functions
+
+```javascript
+const { parseMeta, loadMeta, MetaSDK, ConfigLoader } = require('meta-lang');
 ```
-DB_USER=avijit
-DB_PASS=supersecret123
+
+#### `parseMeta(text, options)`
+
+Parse raw `.meta` content string.
+
+```javascript
+const data = parseMeta(`
+@app
+name:string MyApp
+version:float 1.4
+`);
 ```
+
+#### `loadMeta(path, options)`
+
+Load and parse `.meta` file from disk.
+
+```javascript
+const config = loadMeta('./config.meta', { strictEnv: true });
+```
+
+#### `ConfigLoader` - Production Config Loader
+
+```javascript
+const { ConfigLoader } = require('meta-lang');
+
+const config = new ConfigLoader({
+  configPath: './config.meta',
+  env: 'dev',
+  strictEnv: false,
+  watch: true // Auto-reload on file changes
+});
+
+// Get config values
+const port = config.get('port');
+const dbHost = config.get('database.host');
+
+// Get full config
+const allConfig = config.get();
+
+// Reload config
+config.reload();
+```
+
+#### `loadConfig(options)` - Convenience Function
+
+```javascript
+const { loadConfig } = require('meta-lang');
+
+const config = loadConfig({
+  env: 'dev',
+  strictEnv: false
+});
+```
+
+### App Config API (dotenv-like)
+
+```javascript
+const config = require('meta-lang/app-config');
+
+// Initialize
+config.initConfig({
+  env: process.env.NODE_ENV || 'dev',
+  setEnv: true // Auto-set process.env
+});
+
+// Get values
+const port = config.get('port');
+const all = config.getAll();
+
+// Validate
+config.validate(['port', 'database_host']);
+
+// Reload
+config.reload();
+```
+
+### Version Control SDK
+
+```javascript
+const { MetaSDK } = require('meta-lang');
+
+// Create SDK instance
+const sdk = new MetaSDK({
+  baseDir: process.cwd(),
+  configFile: 'config.meta'
+});
+
+// Initialize versioning
+sdk.init();
+
+// Push a new version (only if @v tag changed)
+const result = sdk.push('Updated configuration');
+console.log(`Saved version: ${result.shortHash}`);
+
+// Checkout a version
+sdk.checkout('abc12345');
+
+// Create a tag
+sdk.tag('v1.0.0');
+
+// Get status
+const status = sdk.getStatus();
+
+// Get history
+const history = sdk.getHistory({ limit: 10 });
+
+// Compute diff
+const diff = sdk.diff('abc12345', 'def67890');
+```
+
+#### MetaSDK Methods
+
+| Method | Description |
+|--------|-------------|
+| `init()` | Initialize versioning system |
+| `isInitialized()` | Check if initialized |
+| `push(message, options)` | Push config to version control |
+| `checkout(ref)` | Checkout version by hash/tag/branch |
+| `tag(tagName, hash)` | Create a tag |
+| `listTags()` | List all tags |
+| `deleteTag(tagName)` | Delete a tag |
+| `createBranch(branchName, hash)` | Create a branch |
+| `listBranches()` | List all branches |
+| `getHistory(options)` | Get version history |
+| `getStatus()` | Get current status |
+| `diff(fromHash, toHash)` | Compute diff between versions |
+| `getVersionInfo(ref)` | Get version information |
+| `getWorkingConfig()` | Get working config content |
+| `getWorkingConfigParsed()` | Get parsed working config |
+| `hasVersionChanged()` | Check if @v tag changed |
 
 ---
 
-## 🧩 Example JavaScript Usage
-
-`index.js`
-
-```js
-import { loadMeta } from "meta-lang";
-import dotenv from "dotenv";
-
-dotenv.config(); // Load .env file
-
-const config = loadMeta("./config.meta");
-
-console.log("App:", config.app.name);
-console.log("DB Host:", config.database.host);
-console.log("DB User:", config.database.username);
-console.log("Cache enabled?", config.cache.enabled);
-```
-
----
-
-## 🧠 Output
-
-```bash
-App: EnvX
-DB Host: localhost
-DB User: avijit
-Cache enabled? true
-```
-
----
-
-## 🧰 CLI Usage
-
-After installing globally:
-
-```bash
-meta config.meta
-```
-
-**Output:**
-
-```json
-{
-  "app": {
-    "name": "EnvX",
-    "version": 1.4,
-    "debug": true,
-    "tags": ["prod", "backend", "secure"]
-  },
-  "database": {
-    "host": "localhost",
-    "port": 5432,
-    "username": "avijit",
-    "password": "supersecret123",
-    "max_connections": 100
-  },
-  "cache": {
-    "enabled": true,
-    "engine": "redis",
-    "config": {
-      "host": "localhost",
-      "port": 6379,
-      "timeout": 30
-    }
-  },
-  "features": {
-    "auth": true,
-    "analytics": false
-  }
-}
-```
-
-### Template Generation
-
-Quickly bootstrap new applications with the template generation feature:
-
-```bash
-meta generate app
-```
-
-This creates a complete application structure with:
-- Multi-environment configuration file
-- Environment variable examples
-- Pre-configured npm scripts
-- Working application example
-
----
-
-## 🧩 Supported Types
+## 🧠 Supported Types
 
 | Type     | Example                   | JS Output                     |
 | -------- | ------------------------- | ----------------------------- |
@@ -189,7 +237,6 @@ This creates a complete application structure with:
 | ----------------------- | ---------------------------------- |
 | `$ENV(NAME)`            | Pulls `process.env.NAME`           |
 | `$ENV(NAME, "default")` | Uses fallback if not set           |
-| Type-aware              | Works with `:env`, `:string`, etc. |
 
 Example:
 
@@ -200,74 +247,140 @@ db_pass:env $ENV(DB_PASS)
 
 ---
 
-## 🧩 API Reference
-
-```js
-import { parseMeta, loadMeta } from "meta-lang";
-```
-
-### `parseMeta(text: string, options?: object)`
-
-Parse raw `.meta` content string.
-
-```js
-const data = parseMeta(`
-@app
-name:string EnvX
-`);
-console.log(data.app.name);
-```
-
----
-
-### `loadMeta(path: string, options?: { strictEnv?: boolean })`
-
-Load and parse `.meta` file from disk.
-
-```js
-const config = loadMeta("./config.meta", { strictEnv: true });
-```
-
----
-
 ## ⚙️ Options
 
 | Option          | Type      | Description                         |
 | --------------- | --------- | ----------------------------------- |
 | `strictEnv`     | `boolean` | Throws error if `$ENV()` is missing |
 | `warnOnMissing` | `boolean` | Warns instead of failing            |
-| `expandEnv`     | `boolean` | Resolves all env vars automatically |
+| `env`           | `string`  | Environment name (dev/prod/staging) |
+| `watch`         | `boolean` | Watch for file changes and reload   |
+| `flatten`       | `boolean` | Flatten nested config to dot notation |
 
 ---
 
-## 🧾 Example JSON Conversion
+## 🧰 CLI Usage
+
+After installing globally:
 
 ```bash
-meta config.meta > config.json
+npm install -g meta-lang
+```
+
+Parse a config file:
+
+```bash
+meta config.meta
+```
+
+Version control commands:
+
+```bash
+meta init                    # Initialize versioning
+meta push "message"          # Push new version
+meta status                  # Check status
+meta checkout <hash>         # Checkout version
+meta tag <name>              # Create tag
+meta history                 # Show history
+meta diff <from> <to>        # Show diff
 ```
 
 ---
 
-## 🔮 Coming Soon
+## 📚 Complete Example
 
-* `meta schema` → generate validation schema
-* `meta fmt` → auto-format `.meta` files
-* `meta import` → import other `.meta` configs
-* VSCode extension for `.meta` highlighting
-* TypeScript typings + JSON Schema generator
+```javascript
+// app.js
+const express = require('express');
+const config = require('meta-lang/app-config');
+
+// Initialize config
+config.initConfig({
+  env: process.env.NODE_ENV || 'dev',
+  strictEnv: process.env.NODE_ENV === 'production',
+  validateRequired: true
+});
+
+// Validate required keys
+config.validate(['port', 'database_host', 'database_password']);
+
+// Use config
+const app = express();
+const port = config.get('port', 3000);
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'dev'}`);
+  console.log(`Debug mode: ${config.get('debug')}`);
+});
+```
 
 ---
 
-## 🧰 Example Folder Layout
+## 🔧 Advanced Usage
 
+### Custom Base Directory
+
+```javascript
+const sdk = new MetaSDK({
+  baseDir: '/path/to/project',
+  configFile: 'my-config.meta'
+});
 ```
-project/
-├── config.meta
-├── .env
-├── src/
-│   └── index.js
-├── package.json
-└── node_modules/
+
+### Working with Multiple Configs
+
+```javascript
+const prodConfig = new ConfigLoader({ 
+  configPath: './config.prod.meta',
+  env: 'prod'
+});
+
+const devConfig = new ConfigLoader({ 
+  configPath: './config.dev.meta',
+  env: 'dev'
+});
+```
+
+### File Watching (Auto-reload)
+
+```javascript
+const config = new ConfigLoader({
+  watch: true,
+  onReload: (newConfig) => {
+    console.log('Config reloaded:', newConfig);
+  },
+  onError: (error) => {
+    console.error('Config error:', error);
+  }
+});
+```
+
+---
+
+## 🧾 Error Handling
+
+```javascript
+const { ConfigError, ConfigNotFoundError } = require('meta-lang');
+const { versioning } = require('meta-lang');
+
+try {
+  const config = loadConfig();
+} catch (error) {
+  if (error instanceof ConfigNotFoundError) {
+    console.error('Config file not found');
+  } else if (error instanceof ConfigError) {
+    console.error('Config error:', error.message);
+  }
+}
+
+try {
+  sdk.push('Message');
+} catch (error) {
+  if (error instanceof versioning.VersioningError) {
+    console.error(`Versioning error: ${error.message}`);
+  }
+}
 ```
 
 ---
@@ -275,4 +388,3 @@ project/
 ## 📜 License
 
 MIT © 2025 — built for developers who love clean configs ❤️
-

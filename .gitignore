@@ -1,4 +1,45 @@
-meta.md
-node_modules
-SUMMARY.md
-meta-lang-1.0.0.tgz
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build artifacts
+*.tgz
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Meta versioning
+.meta/
+
+# Python (separate package)
+python-meta-lang/
+
+# VS Code Extension (separate package)
+vscode-ext/
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
